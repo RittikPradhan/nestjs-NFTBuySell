@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Request } from 'express';
 
 @Controller()
 export class AppController {
@@ -11,7 +12,7 @@ export class AppController {
   }
 
   @Get('getSalePurchaseHistory/:userAddress')
-  getSalePurchaseHistory(): string {
-    return this.appService.getSalePurchaseHistory();
+  getSalePurchaseHistory(@Req() req: Request): string {
+    return this.appService.getSalePurchaseHistory(req);
   }
 }

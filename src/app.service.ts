@@ -1,28 +1,67 @@
 import { Injectable } from '@nestjs/common';
-// import * as dotenv from 'dotenv';
+import { Request } from 'express';
 import 'dotenv/config';
-import * as Web3 from 'web3';
+
+// import Web3 from 'web3';
+// import * as Web3 from 'web3';
+import { web3 } from './web3';
+import { MongoClient } from 'mongodb';
 
 @Injectable()
 export class AppService {
-
   private readonly Alchemy_Provider: any;
   private ABI: any;
   private Address: any;
-  // private web3: Web3;
+  private Web3: any;
+  private web3: any;
+  private dexContract: any;
+  private uri: any;
+  private client: any;
 
   constructor() {
     this.Alchemy_Provider = `${process.env.url}`;
     this.ABI = require('../build/ABI.json');
-    this.Address = "0xDfB98072A198c86209436733A7d7AEaF4e4bBa53";
-
+    this.Address = '0xb34c6cF7ECaB54Cc7Ee32b28171624BDB4b59B1A';
+    this.uri = 'mongodb+srv://0xrittikpradhan:s3ni79lQcElpJS4v@cluster0.fuglox2.mongodb.net/?retryWrites=true&w=majority';
+    this.client = new MongoClient(this.uri);
   }
+
   getHello(): string {
     return 'Hello World!';
   }
 
-  getSalePurchaseHistory(): string {
+  //EventListner(): string {
+  // this.dexContract = new web3.eth.Contract(this.ABI, this.Address);
+  // console.log(this.dexContract);
+  // return "Success";
+  // }
 
-    return this.Alchemy_Provider;
+  getSalePurchaseHistory(req: Request): string {
+    if(req.params.userAddress) {
+      const address: string = req.params.userAddress;
+      const data: Array<Object> = this.getAddressHistory(address);
+      return "Success " + data.forEach((element) => {console.log(element)});
+      // return "" + data;
+    }
+    return ""; 
+  }
+  getAddressHistory(address: string): Array<Object> {
+    var arr: Array<any>;
+    const cursor = this.client.db("SalePurchase").collection("OwnerHistory").find({ ownerAddress: address });
+    if(cursor.hasNext()) {
+      cursor.forEach(element => {
+        arr.push({
+          eventName: element.eventName,
+          "user ": element.ownerAddress,
+          txHash: element.txHash,
+          tokenId: element.tokenId,
+          blockNumber: element.blockNumber,
+          eventTimestamp: element.eventTimestamp,
+        });
+      });
+    }
+
+    //arr
+    return [{"ownerAddress " : "0xAbcd", "tokenId " : "1" }, {"ownerAddress " : "0xEfgh",  "tokenId " : "2" }];
   }
 }
