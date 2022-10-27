@@ -22,7 +22,8 @@ export class AppService {
     this.Alchemy_Provider = `${process.env.url}`;
     this.ABI = require('../build/ABI.json');
     this.Address = '0xb34c6cF7ECaB54Cc7Ee32b28171624BDB4b59B1A';
-    this.uri = 'mongodb+srv://0xrittikpradhan:s3ni79lQcElpJS4v@cluster0.fuglox2.mongodb.net/?retryWrites=true&w=majority';
+    this.uri =
+      'mongodb+srv://0xrittikpradhan:s3ni79lQcElpJS4v@cluster0.fuglox2.mongodb.net/?retryWrites=true&w=majority';
     this.client = new MongoClient(this.uri);
   }
 
@@ -36,32 +37,38 @@ export class AppService {
   // return "Success";
   // }
 
-  getSalePurchaseHistory(req: Request): string {
-    if(req.params.userAddress) {
-      const address: string = req.params.userAddress;
-      const data: Array<Object> = this.getAddressHistory(address);
-      return "Success " + data.forEach((element) => {console.log(element)});
-      // return "" + data;
-    }
-    return ""; 
-  }
-  getAddressHistory(address: string): Array<Object> {
-    var arr: Array<any>;
-    const cursor = this.client.db("SalePurchase").collection("OwnerHistory").find({ ownerAddress: address });
-    if(cursor.hasNext()) {
-      cursor.forEach(element => {
-        arr.push({
-          eventName: element.eventName,
-          "user ": element.ownerAddress,
-          txHash: element.txHash,
-          tokenId: element.tokenId,
-          blockNumber: element.blockNumber,
-          eventTimestamp: element.eventTimestamp,
-        });
-      });
-    }
+  async getSalePurchaseHistory(req: Request): Promise<any> {
+    if (req.params.userAddress) {
+      var arr = [];
 
-    //arr
-    return [{"ownerAddress " : "0xAbcd", "tokenId " : "1" }, {"ownerAddress " : "0xEfgh",  "tokenId " : "2" }];
+      const address: string = req.params.userAddress;
+      const cursor = await this.getDBCursor(address);
+      while(await cursor.hasNext()) {
+        let eventDetails = await cursor.next();
+        console.log(eventDetails);
+        arr.push({
+                eventName: eventDetails.eventName,
+                user: eventDetails.ownerAddress,
+                txHash: eventDetails.txHash,
+                tokenId: eventDetails.tokenId,
+                blockNumber: eventDetails.blockNumber,
+                eventTimestamp: eventDetails.eventTimestamp,
+              });
+      }
+      return arr;
+    }
+  }
+  async getDBCursor(address: string): Promise<any> {
+    try {
+      const cursor = await this.client
+        .db('SalePurchase')
+        .collection('OwnerHistory')
+        .find({ ownerAddress: address });
+
+      return cursor;
+    }
+    catch (e) {
+      console.error(e);
+    }
   }
 }

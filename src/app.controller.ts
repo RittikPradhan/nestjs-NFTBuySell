@@ -12,7 +12,7 @@ export class AppController {
   }
 
   @Get('getSalePurchaseHistory/:userAddress')
-  getSalePurchaseHistory(@Req() req: Request): string {
-    return this.appService.getSalePurchaseHistory(req);
+  async getSalePurchaseHistory(@Req() req: Request): Promise<any> {
+    return await this.appService.getSalePurchaseHistory(req);
   }
 }
