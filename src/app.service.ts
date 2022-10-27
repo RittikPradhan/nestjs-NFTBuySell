@@ -26,16 +26,125 @@ export class AppService {
       'mongodb+srv://0xrittikpradhan:s3ni79lQcElpJS4v@cluster0.fuglox2.mongodb.net/?retryWrites=true&w=majority';
     this.client = new MongoClient(this.uri);
   }
+ 
+  onModuleInit() {
+    this.eventListner();
+  }
 
+  async eventListner() {
+    this.dexContract = new web3.eth.Contract(this.ABI, this.Address);
+
+    this.dexContract.events.BuyNFT((error: any, event: any) => {
+      try {
+        this.createNFTListing(event)  
+      }
+      catch (e) {
+        console.error(e);
+      }
+    })
+    .on("connected", (subscriptionId: any) => {
+      console.log({ subscriptionId });
+    });
+
+    this.dexContract.events.SellNFT((error: any, event: any) => {
+      try {
+        this.createNFTListing(event)  
+      }
+      catch (e) {
+        console.error(e);
+      }
+    })
+    .on("connected", (subscriptionId: any) => {
+      console.log({ subscriptionId });
+    });
+
+    this.dexContract.events.TokenMinted((error: any, event: any) => {
+      try {
+        this.createNFTListing(event)  
+      }
+      catch (e) {
+        console.error(e);
+      }
+    })
+    .on("connected", (subscriptionId: any) => {
+      console.log({ subscriptionId });
+    });
+
+    this.dexContract.events.TokenBurned((error: any, event: any) => {
+      try {
+        this.createNFTListing(event)  
+      }
+      catch (e) {
+        console.error(e);
+      }
+    })
+    .on("connected", (subscriptionId: any) => {
+      console.log({ subscriptionId });
+    });
+  }
+
+  async createNFTListing(event: any) {
+    this.client.connect();
+    const eventDetails = {
+      txHash: event.transactionHash,
+      blockNumber: event.blockNumber.toString(),
+      ownerAddress: event.returnValues.owner,
+      tokenId: event.returnValues.tokenId,
+      eventName: event.event,
+      eventTimestamp: +new Date(), //milliseconds
+    }
+    const checkDuplicateTxHash = await this.client
+    .db("SalePurchase")
+    .collection("OwnerHistory")
+    .findOne({
+      txHash: eventDetails.txHash,
+    });
+
+    if (checkDuplicateTxHash === null) {
+      const result = await this.client
+        .db("SalePurchase")
+        .collection("OwnerHistory")
+        .insertOne(eventDetails);
+      console.log(`New Listing created with following Id: ${result.insertedId}`);
+    } else {
+      console.log("Hash Already Exists.");
+    }
+  }
+
+  async createMintBurnListing(event: any) {
+    this.client.connect();
+    const eventDetails = {
+      txHash: event.transactionHash,
+      blockNumber: event.blockNumber.toString(),
+      ownerAddress: event.returnValues.owner,
+      tokenAmount: event.returnValues.tokenAmount,
+      ethAmount: event.returnValues.ethAmount,
+      eventName: event.event,
+      eventTimestamp: +new Date(), //milliseconds
+    };
+  
+    const checkDuplicateTxHash = await this.client
+      .db("SalePurchase")
+      .collection("MintBurnExchange")
+      .findOne({ txHash: eventDetails.txHash });
+    if (checkDuplicateTxHash === null) {
+      console.log(eventDetails);
+      const result = await this.client
+        .db("SalePurchase")
+        .collection("MintBurnExchange")
+        .insertOne(eventDetails);
+      console.log(`New Listing created with following Id: ${result.insertedId}`);
+    } else {
+      console.log("Hash Already Exists.");
+    }
+  }
+
+  //----------------------------GetAPIs----------------------------
+
+  
   getHello(): string {
     return 'Hello World!';
   }
-
-  //EventListner(): string {
-  // this.dexContract = new web3.eth.Contract(this.ABI, this.Address);
-  // console.log(this.dexContract);
-  // return "Success";
-  // }
 
   async getSalePurchaseHistory(req: Request): Promise<any> {
     if (req.params.userAddress) {
@@ -58,6 +167,9 @@ export class AppService {
       return arr;
     }
   }
+
+  //----------------------------------------------------------------------
+
   async getDBCursor(address: string): Promise<any> {
     try {
       const cursor = await this.client
