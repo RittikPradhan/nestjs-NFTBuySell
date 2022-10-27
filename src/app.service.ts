@@ -83,6 +83,9 @@ export class AppService {
     });
   }
 
+  //--------------BuySellEventListing--------------
+
+
   async createNFTListing(event: any) {
     this.client.connect();
     const eventDetails = {
@@ -110,6 +113,8 @@ export class AppService {
       console.log("Hash Already Exists.");
     }
   }
+
+  //--------------MintBurnListing--------------
 
   async createMintBurnListing(event: any) {
     this.client.connect();
