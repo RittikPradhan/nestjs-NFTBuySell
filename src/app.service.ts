@@ -60,7 +60,7 @@ export class AppService {
 
     this.dexContract.events.TokenMinted((error: any, event: any) => {
       try {
-        this.createNFTListing(event)  
+        this.createMintBurnListing(event)  
       }
       catch (e) {
         console.error(e);
@@ -70,7 +70,7 @@ export class AppService {
       console.log({ subscriptionId });
     });
 
-    this.dexContract.events.TokenBurned((error: any, event: any) => {
+    this.dexContract.events.createMintBurnListing((error: any, event: any) => {
       try {
         this.createNFTListing(event)  
       }
@@ -84,7 +84,6 @@ export class AppService {
   }
 
   //--------------BuySellEventListing--------------
-
 
   async createNFTListing(event: any) {
     this.client.connect();
